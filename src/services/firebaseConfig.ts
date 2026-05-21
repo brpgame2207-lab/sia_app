@@ -1,5 +1,4 @@
-// src/services/firebaseConfig.ts
-import { initializeApp } from "firebase/app";
+import { initializeApp, getApps, getApp } from "firebase/app";
 import { getFirestore, enableMultiTabIndexedDbPersistence, type Firestore } from "firebase/firestore";
 
 const firebaseConfig = {
@@ -29,7 +28,7 @@ let firestoreInstance: Firestore | null = null;
 
 if (!firebaseDbInitError) {
     try {
-        const app = initializeApp(firebaseConfig);
+        const app = getApps().length > 0 ? getApp() : initializeApp(firebaseConfig);
         firestoreInstance = getFirestore(app);
 
         // Enable Multi-Tab Persistence for local dev syncing

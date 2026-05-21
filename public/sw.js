@@ -1,17 +1,96 @@
-// Simple SOS notification service worker
-// This handles showing notifications on Android and other mobile devices
+// SIA PWA & SOS Notification Service Worker
+const CACHE_NAME = 'sia-static-cache-v2';
+const ASSETS_TO_CACHE = [
+  '/',
+  '/index.html',
+  '/manifest.json',
+  '/icon.svg',
+  '/icon-192.png',
+  '/icon-512.png',
+  '/sw.js'
+];
 
 self.addEventListener('install', (event) => {
   console.log('[SW] Service Worker installed');
-  self.skipWaiting();
+  event.waitUntil(
+    caches.open(CACHE_NAME).then((cache) => {
+      console.log('[SW] Pre-caching static assets');
+      return cache.addAll(ASSETS_TO_CACHE);
+    }).then(() => self.skipWaiting())
+  );
 });
 
 self.addEventListener('activate', (event) => {
   console.log('[SW] Service Worker activated');
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cache) => {
+          if (cache !== CACHE_NAME) {
+            console.log('[SW] Clearing old cache:', cache);
+            return caches.delete(cache);
+          }
+        })
+      );
+    }).then(() => self.clients.claim())
+  );
 });
 
-// Listen for push-like messages from the main app
+// Dynamic Offline Caching Handler
+self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
+  
+  const url = new URL(event.request.url);
+  
+  // Skip external APIs, Firebase services, and development HMR web sockets
+  if (
+    url.hostname.includes('firestore.googleapis.com') ||
+    url.hostname.includes('googleapis.com') ||
+    url.hostname.includes('identitytoolkit') ||
+    url.pathname.includes('/@vite/') ||
+    url.pathname.includes('/@react-refresh') ||
+    url.pathname.includes('chrome-extension') ||
+    event.request.url.includes('ws://') ||
+    (event.request.url.includes('localhost') && url.pathname.includes('socket'))
+  ) {
+    return;
+  }
+
+  event.respondWith(
+    caches.match(event.request).then((cachedResponse) => {
+      if (cachedResponse) {
+        // Serve from cache, update in background (Stale-While-Revalidate)
+        fetch(event.request).then((networkResponse) => {
+          if (networkResponse.status === 200) {
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, networkResponse));
+          }
+        }).catch((err) => console.log('[SW] Background sync failed:', err));
+        
+        return cachedResponse;
+      }
+
+      // Network First strategy
+      return fetch(event.request).then((networkResponse) => {
+        if (!networkResponse || networkResponse.status !== 200 || networkResponse.type !== 'basic') {
+          return networkResponse;
+        }
+
+        const responseToCache = networkResponse.clone();
+        caches.open(CACHE_NAME).then((cache) => {
+          cache.put(event.request, responseToCache);
+        });
+
+        return networkResponse;
+      }).catch(() => {
+        if (event.request.mode === 'navigate') {
+          return caches.match('/index.html');
+        }
+      });
+    })
+  );
+});
+
+// --- SOS EMERGENCY NOTIFICATION HANDLERS ---
 self.addEventListener('message', (event) => {
   console.log('[SW] Received message:', event.data);
   
@@ -20,8 +99,8 @@ self.addEventListener('message', (event) => {
     
     self.registration.showNotification(title, {
       body: body,
-      icon: '/icon.png',
-      badge: '/icon.png',
+      icon: '/icon.svg',
+      badge: '/icon.svg',
       vibrate: [300, 100, 300, 100, 300],
       tag: tag || 'sos-alert',
       renotify: true,
@@ -42,26 +121,58 @@ self.addEventListener('message', (event) => {
   }
 });
 
-// Handle notification click
 self.addEventListener('notificationclick', (event) => {
   console.log('[SW] Notification clicked');
   event.notification.close();
   
-  const sosId = event.notification.tag; // We pass the sosAlert.id as the tag
+  const sosId = event.notification.tag;
   
   event.waitUntil(
     self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((clientList) => {
-      // Find an open client window
       let client = clientList.find(c => c.visibilityState === 'visible') || clientList[0];
       
       if (client) {
-        // Send message to the client
         client.postMessage({ type: 'SOS_ACKNOWLEDGED', sosId });
         return client.focus();
       }
       
-      // If no window is open, open one
       return self.clients.openWindow('/?sos_ack=' + sosId);
     })
+  );
+});
+
+// --- WEB PUSH NOTIFICATION LISTENER (Wakes up service worker when app is closed) ---
+self.addEventListener('push', (event) => {
+  console.log('[SW] Push notification received');
+  
+  let data = {
+    title: '🚨 SIA ALERT 💗',
+    body: 'Someone nearby requested sanitary support!',
+    tag: 'sos-alert'
+  };
+  
+  if (event.data) {
+    try {
+      data = event.data.json();
+    } catch (e) {
+      data.body = event.data.text() || data.body;
+    }
+  }
+
+  const options = {
+    body: data.body,
+    icon: '/icon.svg',
+    badge: '/icon.svg',
+    vibrate: [300, 100, 300, 100, 300],
+    tag: data.tag || 'sos-alert',
+    renotify: true,
+    requireInteraction: true,
+    actions: [
+      { action: 'acknowledge', title: 'Acknowledge' }
+    ]
+  };
+
+  event.waitUntil(
+    self.registration.showNotification(data.title, options)
   );
 });

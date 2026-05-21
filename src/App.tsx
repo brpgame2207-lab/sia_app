@@ -137,7 +137,7 @@ const FirebaseSetupErrorPage = ({ message }: { message: string }) => (
 );
 
 // --- Components ---
-const LoginPage = ({ onLogin, onSwitchToSignup }: { onLogin: () => void, onSwitchToSignup: () => void }) => {
+const LoginPage = ({ onLogin, onSwitchToSignup, onInstall, showInstall }: { onLogin: () => void, onSwitchToSignup: () => void, onInstall?: () => void, showInstall?: boolean }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -189,6 +189,18 @@ const LoginPage = ({ onLogin, onSwitchToSignup }: { onLogin: () => void, onSwitc
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-sia-cream p-6 relative overflow-hidden">
+      {showInstall && onInstall && (
+        <div className="absolute top-6 right-6 z-20">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onInstall}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full glass border border-sia-pink/20 text-sia-pink text-[10px] uppercase font-bold tracking-[0.2em] shadow-md hover:bg-white/40 transition-all cursor-pointer"
+          >
+            <Sparkles className="w-3.5 h-3.5 animate-pulse text-sia-pink" /> Install App
+          </motion.button>
+        </div>
+      )}
       <div className="absolute top-0 right-0 w-[40rem] h-[40rem] bg-sia-pink-light/30 rounded-full blur-[100px] -mr-40 -mt-40 animate-pulse" />
       <div className="absolute bottom-0 left-0 w-[30rem] h-[30rem] bg-sia-pink-light/20 rounded-full blur-[80px] -ml-40 -mb-40" />
 
@@ -288,7 +300,7 @@ const LoginPage = ({ onLogin, onSwitchToSignup }: { onLogin: () => void, onSwitc
   );
 };
 
-const SignupPage = ({ onSignup, onSwitchToLogin }: { onSignup: () => void, onSwitchToLogin: () => void }) => {
+const SignupPage = ({ onSignup, onSwitchToLogin, onInstall, showInstall }: { onSignup: () => void, onSwitchToLogin: () => void, onInstall?: () => void, showInstall?: boolean }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
@@ -361,6 +373,18 @@ const SignupPage = ({ onSignup, onSwitchToLogin }: { onSignup: () => void, onSwi
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-sia-cream p-6 relative overflow-hidden">
+      {showInstall && onInstall && (
+        <div className="absolute top-6 right-6 z-20">
+          <motion.button
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            onClick={onInstall}
+            className="flex items-center gap-2 px-5 py-2.5 rounded-full glass border border-sia-pink/20 text-sia-pink text-[10px] uppercase font-bold tracking-[0.2em] shadow-md hover:bg-white/40 transition-all cursor-pointer"
+          >
+            <Sparkles className="w-3.5 h-3.5 animate-pulse text-sia-pink" /> Install App
+          </motion.button>
+        </div>
+      )}
       <div className="absolute top-0 right-0 w-[40rem] h-[40rem] bg-sia-pink-light/30 rounded-full blur-[100px] -mr-40 -mt-40 animate-pulse" />
       <div className="absolute bottom-0 left-0 w-[30rem] h-[30rem] bg-sia-pink-light/20 rounded-full blur-[80px] -ml-40 -mb-40" />
 
@@ -715,7 +739,105 @@ const ProfilePage = ({ currentZone, user }: { currentZone?: Zone, user: Firebase
   );
 };
 
-const SettingsPage = () => {
+const InstallGuideModal = ({ isOpen, onClose, device }: { isOpen: boolean, onClose: () => void, device: 'ios' | 'android' | 'desktop' }) => {
+  if (!isOpen) return null;
+
+  return (
+    <motion.div
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      className="fixed inset-0 z-[200] bg-black/10 backdrop-blur-md flex items-center justify-center p-6"
+      onClick={onClose}
+    >
+      <motion.div
+        initial={{ scale: 0.9, y: 20 }}
+        animate={{ scale: 1, y: 0 }}
+        exit={{ scale: 0.9, y: 20 }}
+        className="w-full max-w-md glass p-10 rounded-[3rem] border border-white shadow-2xl relative text-center"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={onClose}
+          className="absolute top-8 right-8 p-2 hover:bg-sia-pink/5 rounded-full transition-colors"
+        >
+          <X className="w-5 h-5 text-sia-text-muted" />
+        </button>
+
+        <div className="w-20 h-20 bg-sia-pink-light/30 rounded-full flex items-center justify-center mx-auto mb-6">
+          <Sparkles className="w-10 h-10 text-sia-pink" />
+        </div>
+
+        <h3 className="font-serif italic font-bold text-3xl text-sia-text mb-4">How to Install SIA</h3>
+        <p className="text-sia-text-muted text-sm font-light leading-relaxed mb-8">
+          Add SIA to your home screen to launch it instantly in fullscreen and access it offline.
+        </p>
+
+        <div className="text-left space-y-6 bg-white/50 p-6 rounded-[2rem] border border-sia-pink-light/20 mb-8">
+          {device === 'ios' && (
+            <>
+              <div className="flex items-start gap-4">
+                <div className="w-8 h-8 rounded-full bg-sia-pink text-white flex items-center justify-center font-bold text-xs shrink-0">1</div>
+                <p className="text-xs text-sia-text font-light leading-relaxed">
+                  Tap the <span className="font-bold text-sia-pink">Share</span> button at the bottom of Safari (represented by a square with an upward arrow).
+                </p>
+              </div>
+              <div className="flex items-start gap-4">
+                <div className="w-8 h-8 rounded-full bg-sia-pink text-white flex items-center justify-center font-bold text-xs shrink-0">2</div>
+                <p className="text-xs text-sia-text font-light leading-relaxed">
+                  Scroll down the options list and tap <span className="font-bold text-sia-pink">Add to Home Screen</span>.
+                </p>
+              </div>
+            </>
+          )}
+
+          {device === 'android' && (
+            <>
+              <div className="flex items-start gap-4">
+                <div className="w-8 h-8 rounded-full bg-sia-pink text-white flex items-center justify-center font-bold text-xs shrink-0">1</div>
+                <p className="text-xs text-sia-text font-light leading-relaxed">
+                  Tap Chrome's <span className="font-bold text-sia-pink">three-dot menu</span> in the top-right corner of the browser.
+                </p>
+              </div>
+              <div className="flex items-start gap-4">
+                <div className="w-8 h-8 rounded-full bg-sia-pink text-white flex items-center justify-center font-bold text-xs shrink-0">2</div>
+                <p className="text-xs text-sia-text font-light leading-relaxed">
+                  Select <span className="font-bold text-sia-pink">Install app</span> or <span className="font-bold text-sia-pink">Add to Home Screen</span>.
+                </p>
+              </div>
+            </>
+          )}
+
+          {device === 'desktop' && (
+            <>
+              <div className="flex items-start gap-4">
+                <div className="w-8 h-8 rounded-full bg-sia-pink text-white flex items-center justify-center font-bold text-xs shrink-0">1</div>
+                <p className="text-xs text-sia-text font-light leading-relaxed">
+                  Look at the right-hand end of Chrome's address bar (URL bar) at the very top of your browser.
+                </p>
+              </div>
+              <div className="flex items-start gap-4">
+                <div className="w-8 h-8 rounded-full bg-sia-pink text-white flex items-center justify-center font-bold text-xs shrink-0">2</div>
+                <p className="text-xs text-sia-text font-light leading-relaxed">
+                  Click the **Install Icon** (a monitor with a down arrow, or standard `+` symbol) and click **Install**.
+                </p>
+              </div>
+            </>
+          )}
+        </div>
+
+        <button
+          onClick={onClose}
+          className="w-full py-4 bg-sia-pink text-white rounded-full font-bold uppercase tracking-[0.2em] text-xs shadow-lg hover:bg-sia-pink-dark transition-all"
+        >
+          Got It
+        </button>
+      </motion.div>
+    </motion.div>
+  );
+};
+
+const SettingsPage = ({ onInstall, showInstall }: { onInstall?: () => void, showInstall?: boolean }) => {
   const [showReportModal, setShowReportModal] = useState(false);
   const [reportText, setReportText] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -734,6 +856,12 @@ const SettingsPage = () => {
   };
 
   const sections = [
+    ...(showInstall ? [{
+      title: "App Installation",
+      items: [
+        { id: 'installPwa', icon: Sparkles, label: 'Install SIA App', desc: 'Add SIA to your home screen for quick, offline access', type: 'button' }
+      ]
+    }] : []),
     {
       title: "Help & Support",
       items: [
@@ -787,7 +915,13 @@ const SettingsPage = () => {
                     </div>
                   ) : (
                     <button
-                      onClick={() => item.id === 'reportIssue' && setShowReportModal(true)}
+                      onClick={() => {
+                        if (item.id === 'installPwa' && onInstall) {
+                          onInstall();
+                        } else if (item.id === 'reportIssue') {
+                          setShowReportModal(true);
+                        }
+                      }}
                       className="w-10 h-10 rounded-full bg-sia-pink/5 flex items-center justify-center text-sia-pink hover:bg-sia-pink hover:text-white transition-all group"
                     >
                       <ChevronRight className="w-5 h-5 transition-transform group-hover:translate-x-0.5" />
@@ -2084,6 +2218,53 @@ export default function App() {
   const nativeNotifications = useRef<Record<string, Notification>>({});
   const sessionStartTime = useRef<number>(Date.now());
 
+  // --- PWA Installation Support ---
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [showInstallBanner, setShowInstallBanner] = useState(true); // Always display banner initially for max discoverability
+  const [showInstallGuide, setShowInstallGuide] = useState(false);
+  const [deviceType, setDeviceType] = useState<'ios' | 'android' | 'desktop'>('desktop');
+
+  useEffect(() => {
+    // Detect user device for target instructions
+    const ua = navigator.userAgent.toLowerCase();
+    if (/iphone|ipad|ipod/.test(ua)) {
+      setDeviceType('ios');
+    } else if (/android/.test(ua)) {
+      setDeviceType('android');
+    } else {
+      setDeviceType('desktop');
+    }
+
+    const handleBeforeInstallPrompt = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      setShowInstallBanner(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    if (window.matchMedia('(display-mode: standalone)').matches || (navigator as any).standalone) {
+      setShowInstallBanner(false);
+    }
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = async () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      console.log(`User response to the install prompt: ${outcome}`);
+      setDeferredPrompt(null);
+      setShowInstallBanner(false);
+    } else {
+      // Fallback: show visual manual installation instructions
+      setShowInstallGuide(true);
+    }
+  };
+
   useEffect(() => {
     if (!auth) {
       setUser(null);
@@ -2146,16 +2327,26 @@ export default function App() {
 
   const [questions, setQuestions] = useState<Question[]>([]);
   const [arinResponses, setArinResponses] = useState<ArinResponse[]>([]);
-  const [currentZone, setCurrentZone] = useState<Zone>(() => ({
-    id: 'initial',
-    name: 'Detecting...',
-    type: 'city',
-    display_name: 'DETECTING...',
-    city: 'DETECTING...',
-    precise_name: 'DETECTING...',
-    center: { lat: 0, lng: 0 },
-    radius_km: 0
-  }));
+  const [currentZone, setCurrentZone] = useState<Zone>(() => {
+    try {
+      const cached = localStorage.getItem('arin_zone');
+      if (cached) {
+        return JSON.parse(cached);
+      }
+    } catch (e) {
+      console.error("Failed to parse cached zone from localStorage:", e);
+    }
+    return {
+      id: 'initial',
+      name: 'Detecting...',
+      type: 'city',
+      display_name: 'DETECTING...',
+      city: 'DETECTING...',
+      precise_name: 'DETECTING...',
+      center: { lat: 0, lng: 0 },
+      radius_km: 0
+    };
+  });
   const [showRespondModal, setShowRespondModal] = useState(false);
   const [selectedQuestion, setSelectedQuestion] = useState<Question | null>(null);
   const [responseInput, setResponseInput] = useState('');
@@ -2467,22 +2658,7 @@ export default function App() {
     }
   };
 
-  // Ensure cleanup on tab close
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      if (user && db) {
-        try {
-          // Fire-and-forget deletion on tab close
-          deleteDoc(doc(db, "users_location", user.uid));
-        } catch (e) {
-          console.error(e);
-        }
-      }
-    };
 
-    window.addEventListener('beforeunload', handleBeforeUnload);
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload);
-  }, [user, db]);
 
   useEffect(() => {
     if (!user || appState === 'login') return;
@@ -2687,17 +2863,43 @@ export default function App() {
     setAppState('finding');
     setIsRequester(true); // We are the REQUESTER
 
+    let zoneToUse = currentZone;
+
+    if (zoneToUse.center.lat === 0) {
+      console.log("📍 Lat is 0, attempting fast recovery from cache or fresh lookup...");
+      const resolvedZone = await getZoneWithCache(false);
+      if (resolvedZone && resolvedZone.center.lat !== 0) {
+        zoneToUse = resolvedZone;
+        setCurrentZone(resolvedZone);
+      } else {
+        const freshZone = await getZoneWithCache(true);
+        if (freshZone && freshZone.center.lat !== 0) {
+          zoneToUse = freshZone;
+          setCurrentZone(freshZone);
+        }
+      }
+    }
+
+    // Default fallback coordinates if still 0 (e.g. user denied GPS)
+    if (zoneToUse.center.lat === 0) {
+      console.warn("⚠️ Location remains 0. Falling back to default center for broadcast to prevent failure.");
+      zoneToUse = {
+        ...zoneToUse,
+        center: { lat: 12.9716, lng: 77.5946 } // Default fallback (e.g., Bangalore center) to ensure broadcast works
+      };
+    }
+
     // Broadcast SOS Alert to nearby users
-    if (db && user && currentZone.center.lat !== 0) {
+    if (db && user) {
       try {
-        console.log("🚀 Broadcasting SOS Alert for:", option, "at", currentZone.center);
+        console.log("🚀 Broadcasting SOS Alert for:", option, "at", zoneToUse.center);
         const docRef = await addDoc(collection(db, "active_sos_alerts"), {
           user_id: user.uid,
           email: user.email || 'anonymous@sia.com',
           name: 'Sister',
           request_type: option,
-          lat: currentZone.center.lat,
-          lng: currentZone.center.lng,
+          lat: zoneToUse.center.lat,
+          lng: zoneToUse.center.lng,
           timestamp: Date.now(),
           active: true,
           status: 'searching', // new: true 1-to-1 handshake
@@ -2710,7 +2912,7 @@ export default function App() {
         console.error("❌ Failed to broadcast SOS alert:", e);
       }
     } else {
-      console.warn("⚠️ Cannot broadcast SOS: Missing db, user, or location data", { db: !!db, user: !!user, lat: currentZone.center.lat });
+      console.warn("⚠️ Cannot broadcast SOS: Missing db or user data", { db: !!db, user: !!user });
     }
   };
 
@@ -2779,9 +2981,19 @@ export default function App() {
 
   if (appState === 'login') {
     return authView === 'login' ? (
-      <LoginPage onLogin={() => setAppState('idle')} onSwitchToSignup={() => setAuthView('signup')} />
+      <LoginPage 
+        onLogin={() => setAppState('idle')} 
+        onSwitchToSignup={() => setAuthView('signup')} 
+        onInstall={handleInstallClick}
+        showInstall={showInstallBanner}
+      />
     ) : (
-      <SignupPage onSignup={() => setAppState('idle')} onSwitchToLogin={() => setAuthView('login')} />
+      <SignupPage 
+        onSignup={() => setAppState('idle')} 
+        onSwitchToLogin={() => setAuthView('login')} 
+        onInstall={handleInstallClick}
+        showInstall={showInstallBanner}
+      />
     );
   }
   if (appState === 'peer-chat') {
@@ -2943,7 +3155,7 @@ export default function App() {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
           >
-            <SettingsPage />
+            <SettingsPage onInstall={handleInstallClick} showInstall={true} />
           </motion.div>
         )}
 
@@ -3008,6 +3220,52 @@ export default function App() {
                     </div>
                   </div>
                 </section>
+
+                {/* Custom PWA Install Banner */}
+                <AnimatePresence>
+                  {showInstallBanner && (
+                    <motion.div
+                      initial={{ opacity: 0, y: 30 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95 }}
+                      className="max-w-6xl mx-auto px-6 mb-12"
+                    >
+                      <div className="glass p-8 md:p-10 rounded-[3rem] relative overflow-hidden flex flex-col md:flex-row items-center justify-between gap-6 border border-white shadow-2xl">
+                        <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-sia-peach via-sia-pink to-sia-peach" />
+                        
+                        <div className="flex items-center gap-6 text-center md:text-left flex-col md:flex-row">
+                          <div className="w-16 h-16 rounded-2xl bg-sia-pink/10 text-sia-pink flex items-center justify-center shrink-0 shadow-inner">
+                            <Sparkles className="w-8 h-8 animate-pulse" />
+                          </div>
+                          <div>
+                            <h3 className="font-serif italic font-bold text-2xl text-sia-text">Install SIA on Your Device</h3>
+                            <p className="text-sia-text-muted text-sm font-light leading-relaxed mt-1">
+                              Access your anonymous menstrual support sanctuary directly from your desktop or phone home screen. Works completely offline!
+                            </p>
+                          </div>
+                        </div>
+                        
+                        <div className="flex items-center gap-4 w-full md:w-auto shrink-0 justify-center">
+                          <motion.button
+                            whileHover={{ scale: 1.05 }}
+                            whileTap={{ scale: 0.95 }}
+                            onClick={handleInstallClick}
+                            className="px-8 h-14 bg-sia-pink text-white rounded-full font-bold uppercase tracking-[0.2em] text-[10px] shadow-lg hover:bg-sia-pink-dark transition-all flex items-center gap-2"
+                          >
+                            Install Now <ArrowRight className="w-3.5 h-3.5" />
+                          </motion.button>
+                          
+                          <button
+                            onClick={() => setShowInstallBanner(false)}
+                            className="w-14 h-14 rounded-full bg-sia-warm-bg border border-sia-pink-light text-sia-text-muted hover:text-sia-pink transition-colors flex items-center justify-center shrink-0"
+                          >
+                            <X className="w-5 h-5" />
+                          </button>
+                        </div>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
 
                 {/* Mission & Impact moved here */}
                 <section id="mission" className="py-32 px-6">
@@ -3293,6 +3551,11 @@ export default function App() {
             isVerifying={isVerifying}
           />
         )}
+        <InstallGuideModal
+          isOpen={showInstallGuide}
+          onClose={() => setShowInstallGuide(false)}
+          device={deviceType}
+        />
       </AnimatePresence>
     </div>
   );

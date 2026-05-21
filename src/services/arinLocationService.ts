@@ -25,6 +25,25 @@ export const getDistanceKm = (lat1: number, lng1: number, lat2: number, lng2: nu
 };
 
 export const getZoneWithCache = async (forceRefresh = false): Promise<Zone | null> => {
+  // Check if cache exists and we don't force refresh
+  if (!forceRefresh) {
+    try {
+      const cachedZoneStr = localStorage.getItem('arin_zone');
+      const cachedZoneTimeStr = localStorage.getItem('arin_zone_cached_at');
+      if (cachedZoneStr && cachedZoneTimeStr) {
+        const cachedZone = JSON.parse(cachedZoneStr);
+        const cachedTime = parseInt(cachedZoneTimeStr, 10);
+        // Cache is valid for 1 hour
+        if (Date.now() - cachedTime < 60 * 60 * 1000) {
+          console.log("📍 Returning cached zone:", cachedZone);
+          return cachedZone;
+        }
+      }
+    } catch (e) {
+      console.error("📍 Error reading from cached zone:", e);
+    }
+  }
+
   return new Promise((resolve) => {
     if (!navigator.geolocation) {
       resolve(null);
@@ -57,7 +76,7 @@ export const getZoneWithCache = async (forceRefresh = false): Promise<Zone | nul
           });
           
           if (response.ok) {
-            const data = await response.ok ? await response.json() : null;
+            const data = await response.json();
             console.log("📍 Reverse Geocoding Result:", data);
             
             if (data && data.address) {
@@ -86,12 +105,23 @@ export const getZoneWithCache = async (forceRefresh = false): Promise<Zone | nul
           console.error("📍 Reverse geocoding failed:", e);
         }
 
-        sessionStorage.setItem('arin_zone', JSON.stringify(displayZone));
-        sessionStorage.setItem('arin_zone_cached_at', Date.now().toString());
+        localStorage.setItem('arin_zone', JSON.stringify(displayZone));
+        localStorage.setItem('arin_zone_cached_at', Date.now().toString());
         resolve(displayZone);
       },
       (error) => {
         console.error("📍 Geolocation Error:", error.message);
+        // Fallback: If we failed to get fresh geolocation but have any cache, return it rather than null
+        try {
+          const cachedZoneStr = localStorage.getItem('arin_zone');
+          if (cachedZoneStr) {
+            console.log("📍 Geolocation failed, using expired/older cached zone as fallback");
+            resolve(JSON.parse(cachedZoneStr));
+            return;
+          }
+        } catch (e) {
+          console.error("📍 Failed to read fallback cache:", e);
+        }
         resolve(null);
       },
       { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }

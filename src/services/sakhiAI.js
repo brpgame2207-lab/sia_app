@@ -4,13 +4,14 @@
 
 import { buildRAGPrompt } from './ragService';
 
-const GROQ_URL = 'https://api.groq.com/openai/v1/chat/completions';
-// Vite uses import.meta.env.VITE_ prefixed variables
-const GROQ_API_KEY = import.meta.env.VITE_GROQ_API_KEY || '';
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
-const CAPSULE_GROQ_API_KEY = import.meta.env.VITE_CAPSULE_GROQ_API_KEY || GROQ_API_KEY;
-const CAPSULE_GEMINI_API_KEY = import.meta.env.VITE_CAPSULE_GEMINI_API_KEY || GEMINI_API_KEY;
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${GEMINI_API_KEY}`;
+const GROQ_URL = '/api/groq';
+// Client API keys are now securely managed on the server side.
+// Special default/capsule markers let the proxy know if an override key is requested.
+const GROQ_API_KEY = 'default';
+const GEMINI_API_KEY = 'default';
+const CAPSULE_GROQ_API_KEY = 'capsule';
+const CAPSULE_GEMINI_API_KEY = 'capsule';
+const GEMINI_URL = '/api/gemini/models/gemini-2.0-flash:generateContent';
 
 // ── Timeout helper ────────────────────────────────────────────────────────────
 function withTimeout(promise, ms) {
@@ -53,13 +54,17 @@ function buildLocalRagReply(userMessage, chunks) {
 
 // ── Groq API call ─────────────────────────────────────────────────────────────
 async function callGroq(userMessage, systemPrompt, history, timeoutMs = 8000, apiKey = GROQ_API_KEY) {
+  const headers = {
+    'Content-Type': 'application/json',
+  };
+  if (apiKey === 'capsule') {
+    headers['X-Capsule-AI'] = 'true';
+  }
+
   const response = await withTimeout(
     fetch(GROQ_URL, {
       method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        Authorization: `Bearer ${apiKey}`,
-      },
+      headers,
       body: JSON.stringify({
         model: 'llama-3.1-8b-instant',
         temperature: 0.3,         // low = more factual
@@ -86,11 +91,16 @@ async function callGroq(userMessage, systemPrompt, history, timeoutMs = 8000, ap
 // ── Gemini API call (fallback) ────────────────────────────────────────────────
 async function callGemini(userMessage, systemPrompt, history, apiKey = GEMINI_API_KEY) {
   const geminiHistory = convertHistoryForGemini(history);
-  const geminiUrl = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${apiKey}`;
+  const headers = {
+    'Content-Type': 'application/json',
+  };
+  if (apiKey === 'capsule') {
+    headers['X-Capsule-AI'] = 'true';
+  }
 
-  const response = await fetch(geminiUrl, {
+  const response = await fetch(GEMINI_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers,
     body: JSON.stringify({
       system_instruction: { parts: [{ text: systemPrompt }] },
       contents: [
