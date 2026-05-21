@@ -1,12 +1,12 @@
 // SIA PWA & SOS Notification Service Worker
-const CACHE_NAME = 'sia-static-cache-v3';
+const CACHE_NAME = 'sia-static-cache-v4';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',
-  '/manifest.json?v=2',
-  '/icon.svg?v=2',
-  '/icon-192.png?v=2',
-  '/icon-512.png?v=2',
+  '/manifest.json?v=3',
+  '/icon.svg?v=3',
+  '/icon-192.png?v=3',
+  '/icon-512.png?v=3',
   '/sw.js'
 ];
 
