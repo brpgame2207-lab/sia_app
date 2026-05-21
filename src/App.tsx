@@ -213,9 +213,9 @@ const LoginPage = ({ onLogin, onSwitchToSignup, onInstall, showInstall }: { onLo
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            className="w-20 h-20 bg-gradient-to-tr from-sia-pink to-sia-peach rounded-[2rem] flex items-center justify-center shadow-lg mx-auto mb-6"
+            className="w-24 h-24 bg-white rounded-[2rem] flex items-center justify-center shadow-lg mx-auto mb-6 p-2 border border-sia-pink-light"
           >
-            <Shield className="w-10 h-10 text-white" />
+            <img src="/icon-192.png?v=3" alt="SIA Logo" className="w-full h-full object-contain" />
           </motion.div>
           <h2 className="font-serif italic font-bold text-5xl text-sia-text mb-2">Welcome Back</h2>
           <p className="text-sia-text-muted font-light uppercase tracking-[0.2em] text-[10px]">Securely access your sanctuary</p>
@@ -397,9 +397,9 @@ const SignupPage = ({ onSignup, onSwitchToLogin, onInstall, showInstall }: { onS
           <motion.div
             initial={{ scale: 0 }}
             animate={{ scale: 1 }}
-            className="w-20 h-20 bg-gradient-to-tr from-sia-pink to-sia-peach rounded-[2rem] flex items-center justify-center shadow-lg mx-auto mb-6"
+            className="w-24 h-24 bg-white rounded-[2rem] flex items-center justify-center shadow-lg mx-auto mb-6 p-2 border border-sia-pink-light"
           >
-            <Sparkles className="w-10 h-10 text-white" />
+            <img src="/icon-192.png?v=3" alt="SIA Logo" className="w-full h-full object-contain" />
           </motion.div>
           <h2 className="font-serif italic font-bold text-5xl text-sia-text mb-2">Join SIA</h2>
           <p className="text-sia-text-muted font-light uppercase tracking-[0.2em] text-[10px]">Create your anonymous identity</p>
